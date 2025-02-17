@@ -1,25 +1,32 @@
 const express = require("express");
 const cors = require("cors");
-const connectDb = require("./config/db");
-const AuthRouter = require("./routes/authRoutes");
-const protectedRouter = require("./routes/protectedRoutes");
+const dotenv = require("dotenv");
+const connectDB = require("./config/db");
+const gameRoutes = require("./routes/gameRoutes"); // Added game routes
+const authRoutes = require("./routes/authRoutes");
+const protectedRoutes = require("./routes/protectedRoutes");
+const tournamentRoutes = require("./routes/tournamentRoutes");
+
+
+dotenv.config();
+connectDB();
 
 const app = express();
 
-connectDb();
-
+// Middleware
 app.use(cors({
     origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+app.use(express.json()); // Body Parser
 
-app.use(express.json());
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/protected", protectedRoutes);
+app.use("/api/games", gameRoutes); // New route for games
+app.use("/api/tournaments", tournamentRoutes);
 
-app.use("/api/auth", AuthRouter);
-app.use("/api/protected", protectedRouter);
 
-const port = 3000;
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
