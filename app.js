@@ -6,6 +6,8 @@ const gameRoutes = require("./routes/gameRoutes"); // Added game routes
 const authRoutes = require("./routes/authRoutes");
 const protectedRoutes = require("./routes/protectedRoutes");
 const tournamentRoutes = require("./routes/tournamentRoutes");
+const playerRoutes = require("./routes/playerRoutes");
+const matchupsRoutes = require("./routes/matchupsRoutes");
 
 
 dotenv.config();
@@ -26,6 +28,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/games", gameRoutes); // New route for games
 app.use("/api/tournaments", tournamentRoutes);
+app.use("/api/player", playerRoutes)
+app.use("/api/matchups", matchupsRoutes);
 
 
 const PORT = process.env.PORT || 3000;
