@@ -9,7 +9,6 @@ const tournamentRoutes = require("./routes/tournamentRoutes");
 const playerRoutes = require("./routes/playerRoutes");
 const matchupsRoutes = require("./routes/matchupsRoutes");
 
-
 dotenv.config();
 connectDB();
 
