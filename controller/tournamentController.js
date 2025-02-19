@@ -1,5 +1,4 @@
 const Tournament = require("../model/Tournament");
-const Player = require("../model/Player");
 
 // Create Tournament
 const createTournament = async (req, res) => {
@@ -35,7 +34,7 @@ const getTournaments = async (req, res) => {
 
     try {
         const tournaments = await Tournament.find({
-            game: { $regex: new RegExp(`^${game.trim()}$`, 'i') }  // Trim spaces and make it case-insensitive
+            game: { $regex: new RegExp(`^${game.trim()}$`, 'i') }
         });
         console.log("Tournaments found:", tournaments);
 
@@ -50,38 +49,26 @@ const getTournaments = async (req, res) => {
     }
 };
 
+// Get Tournament Names by Game
+const getTournamentNames = async (req, res) => {
+    const { game } = req.params;
+    console.log(`Fetching tournament names for game: "${game}"`);
 
-
-
-// Register Player for Tournament
-const registerPlayer = async (req, res) => {
     try {
-        const { name, email, game, tournament, teamNumber } = req.body;
+        // Fetch only the 'name' field for tournaments of the given game
+        const tournamentNames = await Tournament.find({
+            game: { $regex: new RegExp(`^${game.trim()}$`, 'i') }
+        }).select('name');  // Only include the 'name' field
 
-        // Validate request body
-        if (!name || !email || !game || !tournament || !teamNumber) {
-            return res.status(400).json({ error: "All fields are required" });
+        if (!tournamentNames.length) {
+            return res.status(404).json({ message: `No tournaments found for game: ${game}` });
         }
 
-        // Create a new player with the form data
-        const newPlayer = new Player({
-            name,
-            email,
-            game,
-            teamNumber,
-            tournament,  // Add tournament field
-        });
-
-        await newPlayer.save();  // Save the player
-
-        return res.status(201).json({
-            message: "Player registered successfully!",
-            player: newPlayer,
-        });
+        res.status(200).json(tournamentNames);  // Return only the names
     } catch (error) {
-        console.error("Error registering player:", error);
+        console.error("Error fetching tournament names:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
-module.exports = { createTournament, getTournaments, registerPlayer };
+module.exports = { createTournament, getTournaments, getTournamentNames };
