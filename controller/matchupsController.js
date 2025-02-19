@@ -1,39 +1,45 @@
-const Matchups = require("../models/Matchups");
+const Matchup = require('../model/Matchups');  // Assuming you have a Matchup model
 
 // Save matchups
 const saveMatchups = async (req, res) => {
     try {
         const { tournament, matchups } = req.body;
 
-        await Matchups.findOneAndUpdate(
-            { tournament },
-            { matchups },
-            { upsert: true, new: true }
-        );
+        // Create a new matchup entry
+        const newMatchup = new Matchup({ tournament, matchups });
+        await newMatchup.save();
 
-        res.status(200).json({ message: "Matchups saved successfully" });
+        res.status(201).json({ message: "Matchups saved successfully", matchups: newMatchup });
     } catch (error) {
-        res.status(500).json({ message: "Error saving matchups", error });
+        console.error("Error saving matchups:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
 // Get matchups by tournament
-const getMatchups = async (req, res) => {
+const getMatchupsByTournament = async (req, res) => {
     try {
         const { tournament } = req.params;
-        const matchups = await Matchups.findOne({ tournament });
 
-        if (!matchups) {
-            return res.status(404).json({ message: "No matchups found" });
+        // Check if the tournament parameter is provided
+        if (!tournament) {
+            return res.status(400).json({ error: "Tournament parameter is required" });
         }
 
-        res.status(200).json(matchups.matchups);
+        // Fetch matchups from the database based on the tournament
+        const matchups = await Matchup.find({ tournament });
+
+        // If no matchups are found, send a 404 response
+        if (!matchups.length) {
+            return res.status(404).json({ message: "No matchups found for this tournament" });
+        }
+
+        // Respond with the matchups data
+        res.status(200).json(matchups);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching matchups", error });
+        console.error("Error fetching matchups:", error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
-module.exports = {
-    saveMatchups,
-    getMatchups
-};
+module.exports = { saveMatchups, getMatchupsByTournament };
