@@ -1,13 +1,13 @@
 const express = require('express');
-const { createTournament, getTournaments, registerPlayer } = require('../controller/tournamentController');
+const { createTournament, getTournaments, getTournamentNames } = require('../controller/tournamentController');
 const router = express.Router();
 
-// Create tournament
-router.post('/createTournament', createTournament);
-
+// Get tournaments by game (moved above to avoid conflicts)
 router.get('/:game', getTournaments);
 
-// Register a player for a tournament
-router.post('/registerGames', registerPlayer);
+// Create tournament
+router.post('/registerGames', createTournament);
+
+router.get('/names/:game', getTournamentNames);
 
 module.exports = router;
