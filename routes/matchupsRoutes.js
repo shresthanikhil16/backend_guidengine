@@ -1,11 +1,11 @@
-const express = require("express");
+const express = require('express');
+const { saveMatchups, getMatchupsByTournament } = require('../controller/matchupsController');  // Ensure the correct path
 const router = express.Router();
-const matchupController = require("../controllers/matchupController");
 
-// Save matchups
-router.post("/matchups", matchupController.saveMatchups);
+// Route to save matchups
+router.post('/saveMatchups', saveMatchups);
 
-// Get matchups by tournament
-router.get("/matchups/:tournament", matchupController.getMatchups);
+// Route to get matchups by tournament (updated to match frontend request)
+router.get('/tournament/:tournament', getMatchupsByTournament);
 
 module.exports = router;
