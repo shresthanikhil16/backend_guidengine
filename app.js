@@ -10,9 +10,8 @@ const gameRoutes = require("./routes/gameRoutes");
 const tournamentRoutes = require("./routes/tournamentRoutes");
 const playerRoutes = require("./routes/playerRoutes");
 const matchupsRoutes = require("./routes/matchupsRoutes");
-const winnerRoutes = require("./routes/winnerRoutes"); // Ensure this file exists
+const winnerRoutes = require("./routes/winnerRoutes");  // Corrected import
 
-// Load environment variables
 dotenv.config();
 
 // Connect to the database
@@ -35,7 +34,7 @@ app.use("/api/games", gameRoutes);
 app.use("/api/tournaments", tournamentRoutes);
 app.use("/api/player", playerRoutes);
 app.use("/api/matchups", matchupsRoutes);
-app.use("/api/winners", winnerRoutes); // Corrected endpoint for clarity
+app.use("/api/winners", winnerRoutes);  // Corrected endpoint
 
 // Start server
 const PORT = process.env.PORT || 3000;

@@ -1,22 +1,23 @@
 const Winner = require("../model/winnerModel");
+const Tournament = require("../model/Tournament.js");
+const Player = require("../model/Player.js");
 
-
-// Add a tournament winner
 const addWinner = async (req, res) => {
     try {
         const { tournamentId, winner } = req.body;
 
+        // Check if both tournamentId and winner are provided
         if (!tournamentId || !winner) {
             return res.status(400).json({ error: "Tournament ID and Winner name are required" });
         }
 
-        // Validate that the tournament exists
+        // Validate the tournament
         const tournament = await Tournament.findById(tournamentId);
         if (!tournament) {
             return res.status(404).json({ error: "Tournament not found" });
         }
 
-        // Validate that the player exists in the tournament
+        // Validate that the winner exists in the tournament
         const player = await Player.findOne({ name: winner, tournament: tournament.name });
         if (!player) {
             return res.status(404).json({ error: "Winner not found in the tournament" });
@@ -33,7 +34,6 @@ const addWinner = async (req, res) => {
     }
 };
 
-// Get all tournament winners
 const getWinners = async (req, res) => {
     try {
         const winners = await Winner.find();
