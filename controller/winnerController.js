@@ -1,17 +1,29 @@
 const Winner = require("../model/winnerModel");
 
+
 // Add a tournament winner
 const addWinner = async (req, res) => {
     try {
-        const { tournament, winner } = req.body;
+        const { tournamentId, winner } = req.body;
 
-        // Validate input
-        if (!tournament || !winner) {
-            return res.status(400).json({ error: "Tournament name and winner name are required" });
+        if (!tournamentId || !winner) {
+            return res.status(400).json({ error: "Tournament ID and Winner name are required" });
         }
 
-        // Save to database
-        const newWinner = new Winner({ tournament, winner });
+        // Validate that the tournament exists
+        const tournament = await Tournament.findById(tournamentId);
+        if (!tournament) {
+            return res.status(404).json({ error: "Tournament not found" });
+        }
+
+        // Validate that the player exists in the tournament
+        const player = await Player.findOne({ name: winner, tournament: tournament.name });
+        if (!player) {
+            return res.status(404).json({ error: "Winner not found in the tournament" });
+        }
+
+        // Save the winner to the database
+        const newWinner = new Winner({ tournament: tournament.name, winner });
         await newWinner.save();
 
         return res.status(201).json({ message: "Winner saved successfully", winner: newWinner });
@@ -24,7 +36,7 @@ const addWinner = async (req, res) => {
 // Get all tournament winners
 const getWinners = async (req, res) => {
     try {
-        const winners = await Winner.find().sort({ date: -1 });
+        const winners = await Winner.find();
 
         if (!winners.length) {
             return res.status(404).json({ message: "No tournament winners found" });
