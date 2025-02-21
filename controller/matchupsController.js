@@ -18,21 +18,17 @@ const saveMatchups = async (req, res) => {
 
 // Get matchups by tournament
 const getMatchupsByTournament = async (req, res) => {
+    const { tournament } = req.params;
+
     try {
-        const { tournament } = req.params;
-        console.log("🔍 Requested Tournament:", tournament); // Debugging
-
-        const matchupDoc = await Matchup.findOne({ tournament });
-
-        if (!matchupDoc) {
-            console.log("❌ No matchups found for:", tournament);
-            return res.status(404).json({ message: "No matchups found for this tournament" });
+        // Find matchups where tournament matches the provided tournament
+        const matchups = await Matchup.find({ tournament });
+        if (!matchups.length) {
+            return res.status(404).json({ message: "No matchups found." });
         }
-
-        res.status(200).json(matchupDoc.matchups);
+        res.json(matchups); // Return matchups
     } catch (error) {
-        console.error("⚠ Error fetching matchups:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+        res.status(500).json({ message: error.message });
     }
 };
 
