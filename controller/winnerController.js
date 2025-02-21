@@ -1,30 +1,23 @@
 const Winner = require("../model/winnerModel");
-const Tournament = require("../model/Tournament.js");
-const Player = require("../model/Player.js");
+const Player = require("../model/Player");
 
+// Function to add a winner
 const addWinner = async (req, res) => {
+    const { tournamentId, winner } = req.body; // tournamentId is actually the tournament name
+
     try {
-        const { tournamentId, winner } = req.body;
+        console.log("Received Data:", req.body);
 
-        // Check if both tournamentId and winner are provided
-        if (!tournamentId || !winner) {
-            return res.status(400).json({ error: "Tournament ID and Winner name are required" });
-        }
+        // Find the player with the given tournament name and winner name
+        const player = await Player.findOne({ name: winner.trim(), tournament: tournamentId.trim() });
 
-        // Validate the tournament
-        const tournament = await Tournament.findById(tournamentId);
-        if (!tournament) {
-            return res.status(404).json({ error: "Tournament not found" });
-        }
-
-        // Validate that the winner exists in the tournament
-        const player = await Player.findOne({ name: winner, tournament: tournament.name });
         if (!player) {
+            console.error("Winner not found in tournament:", winner);
             return res.status(404).json({ error: "Winner not found in the tournament" });
         }
 
-        // Save the winner to the database
-        const newWinner = new Winner({ tournament: tournament.name, winner });
+        // Save the winner (using tournament name instead of ID)
+        const newWinner = new Winner({ tournament: tournamentId.trim(), winner: winner.trim() });
         await newWinner.save();
 
         return res.status(201).json({ message: "Winner saved successfully", winner: newWinner });
@@ -34,6 +27,7 @@ const addWinner = async (req, res) => {
     }
 };
 
+// Function to get all winners
 const getWinners = async (req, res) => {
     try {
         const winners = await Winner.find();
@@ -49,4 +43,7 @@ const getWinners = async (req, res) => {
     }
 };
 
-module.exports = { addWinner, getWinners };
+module.exports = {
+    addWinner,
+    getWinners,
+};
