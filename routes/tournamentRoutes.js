@@ -10,4 +10,4 @@ router.post('/registerGames', createTournament);
 
 router.get('/names/:game', getTournamentNames);
 
-module.exports = router; 
+module.exports = router;
