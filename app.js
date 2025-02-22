@@ -10,7 +10,11 @@ const gameRoutes = require("./routes/gameRoutes");
 const tournamentRoutes = require("./routes/tournamentRoutes");
 const playerRoutes = require("./routes/playerRoutes");
 const matchupsRoutes = require("./routes/matchupsRoutes");
-const winnerRoutes = require("./routes/winnerRoutes");  // Corrected import
+const winnerRoutes = require("./routes/winnerRoutes");
+const profileUploadMiddleware = require('./middleware/profileUploadMiddleware');
+const messageRoutes = require("./routes/messageRoutes");
+const path = require("path");  // Corrected import
+
 
 dotenv.config();
 
@@ -35,6 +39,12 @@ app.use("/api/tournaments", tournamentRoutes);
 app.use("/api/player", playerRoutes);
 app.use("/api/matchups", matchupsRoutes);
 app.use("/api/winners", winnerRoutes);  // Corrected endpoint
+app.use('/api/messages', messageRoutes);
+app.use(profileUploadMiddleware);
+
+// Serve static files (uploads folder for files like DOCX, images)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 // Start server
 const PORT = process.env.PORT || 3000;
