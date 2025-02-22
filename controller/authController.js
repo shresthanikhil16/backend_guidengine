@@ -8,24 +8,23 @@ const config = require('../config/config');
 
 // Register a new user
 const registerUser = async (req, res) => {
-    const { name, email, password, confirm_password, role } = req.body;
+    const { name, email, password, role, confirm_password } = req.body;
+    let profilePicture = req.file ? req.file.path : null;
 
     try {
-        // Check if user already exists
         const userExist = await User.findOne({ email });
         if (userExist) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
-
         const user = new User({
             name,
             email,
-            password: hashedPassword, // Store the hashed password
+            password: hashedPassword,
             confirm_password,
             role,
+            profilePicture,
         });
 
         await user.save();
@@ -176,6 +175,77 @@ const resetPassword = async (req, res) => {
     }
 };
 
+const getProfile = async (req, res) => {
+    try {
+        console.log("Decoded user:", req.user); // Debugging log
+
+        const userId = req.user.id; // Get user ID from JWT
+        const user = await User.findById(userId).select("-password -token"); // Exclude sensitive fields
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        res.status(200).json({ success: true, user });
+    } catch (error) {
+        console.error("Error in getProfile:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const updateProfile = async (req, res) => {
+    const { name, email, newPassword } = req.body;
+    const userId = req.user.id; // Ensure you're extracting the user ID from the token
+    let profilePicture = req.file ? req.file.path : null; // Get the uploaded file path
+
+    try {
+        const updateData = { name, email };
+        if (newPassword) {
+            const hashedPassword = await bcrypt.hash(newPassword, 10);
+            updateData.password = hashedPassword;
+        }
+        if (profilePicture) {
+            updateData.profilePicture = profilePicture; // Update the profile picture path
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({ message: 'Profile updated successfully', user: updatedUser });
+    } catch (err) {
+        console.error("Error updating profile:", err);
+        res.status(500).json({ message: 'Error updating profile' });
+    }
+};
+
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({ role: 'user' }).select('-password -token'); // Exclude sensitive fields
+        res.status(200).json({ success: true, users });
+    } catch (error) {
+        console.error("Error fetching users:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const getUserById = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const user = await User.findById(id).select('-password -token'); // Exclude sensitive fields
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+        res.status(200).json({ success: true, user });
+    } catch (error) {
+        console.error("Error fetching user by ID:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+
+
 
 module.exports = {
     registerUser,
@@ -183,4 +253,8 @@ module.exports = {
     forgotPassword,
     sendResetPasswordMail,
     resetPassword,
+    getProfile,
+    updateProfile,
+    getAllUsers,
+    getUserById,
 };
