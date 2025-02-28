@@ -12,12 +12,10 @@ const playerRoutes = require("./routes/playerRoutes");
 const matchupsRoutes = require("./routes/matchupsRoutes");
 const winnerRoutes = require("./routes/winnerRoutes");
 const profileUploadMiddleware = require('./middleware/profileUploadMiddleware');
+const userRoutes = require("./routes/userRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const path = require("path");  // Corrected import
-
-
-dotenv.config();
-
+require('dotenv').config();
 // Connect to the database
 connectDB();
 
@@ -33,6 +31,7 @@ app.use(express.json()); // Body parser to handle JSON requests
 
 // API Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/v1/auth", userRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/games", gameRoutes);
 app.use("/api/tournaments", tournamentRoutes);

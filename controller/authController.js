@@ -7,35 +7,58 @@ const User = require('../model/User'); // Changed to CommonJ
 const config = require('../config/config');
 
 // Register a new user
+// Register a new user
 const registerUser = async (req, res) => {
-    const { name, email, password, role, confirm_password } = req.body;
-    let profilePicture = req.file ? req.file.path : null;
-
     try {
-        const userExist = await User.findOne({ email });
-        if (userExist) {
-            return res.status(400).json({ message: 'User already exists' });
+        const { username, email, password, confirmPassword, role } = req.body;
+        let profilePicture = req.file ? req.file.path : null;
+
+        // Validate required fields
+        if (!username || !email || !password) {
+            return res.status(400).json({ message: "All fields are required" });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        // Check if user already exists
+        const userExist = await User.findOne({ email });
+        if (userExist) {
+            return res.status(400).json({ message: "Email already exists" });
+        }
+
+        // Create new user (NO manual hashing here)
         const user = new User({
-            name,
+            username,
             email,
-            password: hashedPassword,
-            confirm_password,
+            password,
             role,
+            confirmPassword,
             profilePicture,
         });
 
+        // Generate token
+        const token = jwt.sign(
+            { id: user._id, email: user.email, role: user.role },
+            process.env.JWT_SECRET || "THISISSECRETKEY",
+            { expiresIn: "1h" }
+        );
+
+        // Save token to user document
+        user.token = token;
         await user.save();
-        res.status(201).json({ message: 'User registered successfully' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Error registering user' });
+
+        res.status(201).json({
+            success: true,
+            message: "User registered successfully!",
+            token,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error registering user", error });
     }
 };
 
-// Login a user
+
+
+// Login function (updated for better error handling)
 const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
@@ -51,21 +74,29 @@ const loginUser = async (req, res) => {
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return res.status(401).json({ message: 'Invalid email or password' });
+            return res.status(401).json({ success: false, message: 'Invalid email or password' });
         }
 
         const token = jwt.sign(
             { id: user._id, email: user.email, role: user.role },
-            process.env.JWT_SECRET || 'your_secret_key',
+            process.env.JWT_SECRET || 'THISISSECRETKEY',
             { expiresIn: '1h' }
         );
 
-        res.status(200).json({ message: 'Login successful', token, role: user.role });
+        res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            token,
+            role: user.role,
+            username: user.username,
+            _id: user._id
+        });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error logging in', error });
+        res.status(500).json({ success: false, message: 'Error logging in', error });
     }
 };
+
 
 const forgotPassword = async (req, res) => {
     const email = req.body.email;
@@ -101,7 +132,7 @@ const forgotPassword = async (req, res) => {
 };
 
 
-const sendResetPasswordMail = (name, email, token) => {
+const sendResetPasswordMail = (username, email, token) => {
     console.log("Attempting to send email to:", email); // Debug log
 
     if (!email) {
@@ -115,17 +146,17 @@ const sendResetPasswordMail = (name, email, token) => {
         secure: false,
         requireTLS: true,
         auth: {
-            user: config.emailUser,
-            pass: config.emailPassword,
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
         },
     });
 
     const mailOptions = {
-        from: config.emailUser,
+        from: process.env.EMAIL_USER,
         to: email,
         subject: 'Password Reset Request',
         html: `
-            <p>Hi ${name},</p>
+            <p>Hi ${username},</p>
             <p> Welcome to Guide Engine </p>
             <p>You requested a password reset. Please click the link below to reset your password:</p>
             <p><a href="http://localhost:5173/resetPassword?token=${token}">Reset Password</a></p>
@@ -194,12 +225,12 @@ const getProfile = async (req, res) => {
 };
 
 const updateProfile = async (req, res) => {
-    const { name, email, newPassword } = req.body;
+    const { username, email, newPassword } = req.body;
     const userId = req.user.id; // Ensure you're extracting the user ID from the token
     let profilePicture = req.file ? req.file.path : null; // Get the uploaded file path
 
     try {
-        const updateData = { name, email };
+        const updateData = { username, email };
         if (newPassword) {
             const hashedPassword = await bcrypt.hash(newPassword, 10);
             updateData.password = hashedPassword;
@@ -242,10 +273,7 @@ const getUserById = async (req, res) => {
         console.error("Error fetching user by ID:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
-};
-
-
-
+};  
 
 module.exports = {
     registerUser,
